@@ -104,6 +104,7 @@ class DAQmxTask(object):
         self.timing=DAQmxTiming(self)
         self.start_trigger=DAQmxStartTrigger(self)
         self.reference_trigger=DAQmxReferenceTrigger(self)
+        self.read=DAQmxReadProperties(self)
             
     def clear(self):
         err=DAQmxClearTask(self.task_handle)
@@ -144,37 +145,98 @@ class DAQmxTask(object):
         if err<0:
             raise DAQmxException(err)
         
-    #channel read and write
-    def read_analog(self,buffer,samples,timeout=1):
-        sampsread=int32() 
-        buffer_size=buffer.shape[0]
-        if len(buffer.shape)==2:
-            buffer_size*=buffer.shape[1]
+    #analog channel read and write
+    def readAnalogF64(self,buffer,samples,auto_start=True,timeout=1,fill_mode=DAQmx_Val_GroupByChannel):
+        sampsread=int32()         
         err=DAQmxReadAnalogF64(self.task_handle,samples,timeout,DAQmx_Val_GroupByChannel,
-                                        buffer,buffer_size,ctypes.byref(sampsread),None)
+                                        buffer,buffer.size,ctypes.byref(sampsread),None)
         if err<0:
             raise DAQmxException(err)
         return sampsread.value
         
-    def read_analog_scalar(self,timeout=1):
+    def readAnalogScalarF64(self,timeout=1,auto_start=True,fill_mode=DAQmx_Val_GroupByChannel):
         value=float64() 
         err=DAQmxReadAnalogScalarF64(self.task_handle,timeout,ctypes.byref(value),None)
         if err<0:
             raise DAQmxException(err)
         return value.value
             
-    def write_analog(self,buffer,samples,timeout=1):
+    def writeAnalogF64(self,buffer,samples,auto_start=True,timeout=1,fill_mode=DAQmx_Val_GroupByChannel):
         sampsread=int32() 
         err=DAQmxWriteAnalogF64(self.task_handle,samples,timeout,DAQmx_Val_GroupByChannel,
-                                        buffer,buffer.shape[0],ctypes.byref(sampsread),None)
+                                        buffer,buffer.size,ctypes.byref(sampsread),None)
         if err<0:
             raise DAQmxException(err)
         return sampsread.value
         
-    def write_analog_scalar(self,value,timeout=1,autostart=True):
-        err=DAQmxWriteAnalogScalarF64(self.task_handle,autostart,timeout,value,None)
+    def writeAnalogScalarF64(self,value,timeout=1,auto_start=True,fill_mode=DAQmx_Val_GroupByChannel):
+        err=DAQmxWriteAnalogScalarF64(self.task_handle,auto_start,timeout,value,None)
         if err<0:
             raise DAQmxException(err)
+    #read and write binary data 
+    def readBinaryI16(self,timeout=1,auto_start=True,fill_mode=DAQmx_Val_GroupByChannel):
+        value=float64() 
+        err=DAQmxReadBinaryI16(self.task_handle,samples,timeout,fill_mode,
+                                        buffer,buffer.size,ctypes.byref(sampsread),None)
+        if err<0:
+            raise DAQmxException(err)
+        return value.value
+            
+    def writeBinaryI16(self,buffer,samples,auto_start=True,timeout=1,fill_mode=DAQmx_Val_GroupByChannel):
+        sampsread=int32() 
+        err=DAQmxWriteBinaryI16(self.task_handle,samples,timeout,fill_mode,
+                                        buffer,buffer.size,ctypes.byref(sampsread),None)
+        if err<0:
+            raise DAQmxException(err)
+        return sampsread.value
+        
+    def readBinaryI32(self,timeout=1,fill_mode=DAQmx_Val_GroupByChannel):
+        value=float64() 
+        err=DAQmxReadBinaryI32(self.task_handle,samples,timeout,fill_mode,
+                                        buffer,buffer.size,ctypes.byref(sampsread),None)
+        if err<0:
+            raise DAQmxException(err)
+        return value.value
+            
+    def writeBinaryI32(self,buffer,samples,timeout=1,fill_mode=DAQmx_Val_GroupByChannel):
+        sampsread=int32() 
+        err=DAQmxWriteBinaryI32(self.task_handle,samples,timeout,fill_mode,
+                                        buffer,buffer.size,ctypes.byref(sampsread),None)
+        if err<0:
+            raise DAQmxException(err)
+        return sampsread.value
+        
+    def readBinaryU16(self,timeout=1,fill_mode=DAQmx_Val_GroupByChannel):
+        value=float64() 
+        err=DAQmxReadBinaryI16(self.task_handle,samples,timeout,fill_mode,
+                                        buffer,buffer.size,ctypes.byref(sampsread),None)
+        if err<0:
+            raise DAQmxException(err)
+        return value.value
+            
+    def writeBinaryU16(self,buffer,samples,timeout=1,fill_mode=DAQmx_Val_GroupByChannel):
+        sampsread=int32() 
+        err=DAQmxWriteBinaryU16(self.task_handle,samples,timeout,fill_mode,
+                                        buffer,buffer.size,ctypes.byref(sampsread),None)
+        if err<0:
+            raise DAQmxException(err)
+        return sampsread.value
+        
+    def readBinaryU32(self,timeout=1,fill_mode=DAQmx_Val_GroupByChannel):
+        value=float64() 
+        err=DAQmxReadBinaryU32(self.task_handle,samples,timeout,fill_mode,
+                                        buffer,buffer.size,ctypes.byref(sampsread),None)
+        if err<0:
+            raise DAQmxException(err)
+        return value.value
+            
+    def writeBinaryU32(self,buffer,samples,timeout=1,fill_mode=DAQmx_Val_GroupByChannel):
+        sampsread=int32() 
+        err=DAQmxWriteBinaryU32(self.task_handle,samples,timeout,fill_mode,buffer,
+                                        buffer.size,ctypes.byref(sampsread),None)
+        if err<0:
+            raise DAQmxException(err)
+        return sampsread.value
         
 
     #channel creation functions
@@ -238,6 +300,24 @@ class DAQmxTask(object):
     #properties
     #create channels
     
+class DAQmxReadProperties(object):
+    def __init__(self,task):
+        self.task=task
+        
+    def _get_relative_to(self):
+        ret_val=int32()
+        err=DAQmxGetReadRelativeTo(self.task.task_handle,ctypes.byref(ret_val))
+        if err<0:
+            raise DAQmxException(err)
+        return ret_val.value()
+    def _set_relative_to(self,mode): 
+        err=DAQmxSetReadRelativeTo(self.task.task_handle,mode)
+        if err<0:
+            raise DAQmxException(err)
+    def _del_relative_to(self): 
+        err=DAQmxResetv(self.task.task_handle)
+        if err<0:
+            raise DAQmxException(err)
     
         
 class DAQmxTiming(object):
